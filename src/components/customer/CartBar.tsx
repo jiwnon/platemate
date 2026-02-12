@@ -7,16 +7,20 @@ type Props = {
   totalPrice: number;
   restaurantId: string;
   tableId: string;
-  onOrder: () => void;
+  onClick: () => void;
 };
 
-export function CartBar({ itemCount, totalPrice, restaurantId, tableId, onOrder }: Props) {
+export function CartBar({ itemCount, totalPrice, restaurantId, tableId, onClick }: Props) {
   const t = useTranslations('Order');
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-20 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
       <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onClick}
+          className="flex items-center gap-3 text-left"
+        >
           <div className="relative">
             <span className="text-2xl" aria-hidden>
               🛒
@@ -30,10 +34,10 @@ export function CartBar({ itemCount, totalPrice, restaurantId, tableId, onOrder 
           <span className="font-semibold text-gray-900">
             ₩{totalPrice.toLocaleString()}
           </span>
-        </div>
+        </button>
         <button
           type="button"
-          onClick={onOrder}
+          onClick={onClick}
           disabled={itemCount === 0}
           data-restaurant-id={restaurantId}
           data-table-id={tableId}

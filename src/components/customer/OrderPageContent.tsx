@@ -2,12 +2,14 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Locale } from '@/types';
 import type { MenuItem, Restaurant, RestaurantTable } from '@/types';
 import { LanguageSelector } from './LanguageSelector';
 import { OrderMenuCard } from './OrderMenuCard';
 import { CartBar } from './CartBar';
+import { CartModal } from './CartModal';
 import { MenuDetailModal } from './MenuDetailModal';
 
 const CATEGORY_ALL = 'all';
@@ -18,7 +20,7 @@ const CATEGORY_KEYS: Record<string, string> = {
   drink: 'categoryDrink',
 };
 
-type CartEntry = { menuItem: MenuItem; quantity: number };
+export type CartEntry = { menuItem: MenuItem; quantity: number };
 
 type Props = {
   restaurant: Restaurant;
@@ -38,9 +40,12 @@ export function OrderPageContent({
   tableId,
 }: Props) {
   const t = useTranslations('Order');
+  const router = useRouter();
   const [selectedCategory, setSelectedCategory] = useState<string>(CATEGORY_ALL);
   const [cart, setCart] = useState<CartEntry[]>([]);
   const [selectedMenu, setSelectedMenu] = useState<MenuItem | null>(null);
+  const [cartModalOpen, setCartModalOpen] = useState(false);
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -69,6 +74,54 @@ export function OrderPageContent({
       return [...prev, { menuItem: item, quantity }];
     });
   }, []);
+
+  const updateCartQuantity = useCallback((item: MenuItem, delta: number) => {
+    setCart((prev) => {
+      const i = prev.findIndex((e) => e.menuItem.id === item.id);
+      if (i < 0) return prev;
+      const next = [...prev];
+      const newQty = next[i].quantity + delta;
+      if (newQty <= 0) {
+        next.splice(i, 1);
+        return next;
+      }
+      next[i] = { ...next[i], quantity: newQty };
+      return next;
+    });
+  }, []);
+
+  const handlePlaceOrder = useCallback(async () => {
+    if (cart.length === 0) return;
+    setOrderSubmitting(true);
+    const total = cart.reduce((sum, e) => sum + e.menuItem.price * e.quantity, 0);
+    try {
+      const res = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantId,
+          tableId,
+          items: cart.map((e) => ({
+            menuItemId: e.menuItem.id,
+            quantity: e.quantity,
+            unitPrice: e.menuItem.price,
+          })),
+          totalPrice: total,
+          language: locale,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error((data as { error?: string }).error ?? 'Order failed');
+      const orderId = (data as { orderId: string }).orderId;
+      setCart([]);
+      setCartModalOpen(false);
+      const pathPrefix = locale === 'ko' ? '' : `/${locale}`;
+      router.push(`${pathPrefix}/order/${restaurantId}/${tableId}/checkout/${orderId}`);
+    } catch (err) {
+      console.error(err);
+      setOrderSubmitting(false);
+    }
+  }, [cart, restaurantId, tableId, locale, router]);
 
   const cartItemCount = useMemo(
     () => cart.reduce((sum, e) => sum + e.quantity, 0),
@@ -170,15 +223,27 @@ export function OrderPageContent({
         )}
       </AnimatePresence>
 
+      {/* 장바구니 모달 */}
+      <AnimatePresence>
+        {cartModalOpen && (
+          <CartModal
+            cart={cart}
+            locale={locale}
+            onClose={() => setCartModalOpen(false)}
+            onUpdateQuantity={updateCartQuantity}
+            onPlaceOrder={handlePlaceOrder}
+            isSubmitting={orderSubmitting}
+          />
+        )}
+      </AnimatePresence>
+
       {/* 하단 고정 바 */}
       <CartBar
         itemCount={cartItemCount}
         totalPrice={totalPrice}
         restaurantId={restaurantId}
         tableId={tableId}
-        onOrder={() => {
-          // TODO: 주문하기 플로우
-        }}
+        onClick={() => setCartModalOpen(true)}
       />
     </div>
   );
