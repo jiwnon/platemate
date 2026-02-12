@@ -12,6 +12,8 @@ export interface Restaurant {
   updated_at: string;
 }
 
+export type MenuCategory = 'main' | 'side' | 'drink';
+
 export interface MenuItem {
   id: string;
   restaurant_id: string;
@@ -21,9 +23,21 @@ export interface MenuItem {
   description_i18n?: Record<Locale, string>;
   price: number;
   image_url?: string;
-  docent_content?: string; // AI 도슨트 생성 내용
+  docent_content?: string;
   sort_order: number;
   is_available: boolean;
+  category?: MenuCategory | string | null;
+  spicy_level?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RestaurantTable {
+  id: string;
+  restaurant_id: string;
+  name: string;
+  table_number?: number | null;
+  qr_code?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -57,4 +71,11 @@ export interface PrivateReview {
   rating: number;
   comment?: string;
   created_at: string;
+}
+
+/** AI 도슨트 API 응답 형식 */
+export interface DocentContent {
+  cultural_context: string;
+  ingredients: string[];
+  recommendation: string;
 }

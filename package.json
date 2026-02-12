@@ -27,7 +27,8 @@
     "@stripe/stripe-js": "^4.8.0",
     "stripe": "^17.4.0",
     "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.4"
+    "tailwind-merge": "^2.5.4",
+    "framer-motion": "^11.11.0"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.0.0",
