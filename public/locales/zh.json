@@ -1,0 +1,19 @@
+{
+  "Home": {
+    "tagline": "扫码点餐，用您的语言。与AI一起体验韩国美食。",
+    "guestOrder": "顾客点餐",
+    "dashboard": "店主后台"
+  },
+  "Order": {
+    "menu": "菜单",
+    "cart": "购物车",
+    "checkout": "结账",
+    "docent": "AI导览"
+  },
+  "Dashboard": {
+    "orders": "订单",
+    "menu": "菜单管理",
+    "reviews": "私密评价",
+    "report": "AI周报"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "Home": {
+    "tagline": "QR로 주문하고, AI와 함께 한국 음식을 경험하세요",
+    "guestOrder": "손님 주문하기",
+    "dashboard": "사장님 대시보드"
+  },
+  "Order": {
+    "menu": "메뉴",
+    "cart": "장바구니",
+    "checkout": "결제하기",
+    "docent": "AI 도슨트"
+  },
+  "Dashboard": {
+    "orders": "주문 현황",
+    "menu": "메뉴 관리",
+    "reviews": "비공개 평가",
+    "report": "AI 주간 리포트"
+  }
+}

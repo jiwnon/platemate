@@ -1,0 +1,19 @@
+{
+  "Home": {
+    "tagline": "Scan QR, order in your language. Experience Korean food with AI.",
+    "guestOrder": "Guest Order",
+    "dashboard": "Owner Dashboard"
+  },
+  "Order": {
+    "menu": "Menu",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "docent": "AI Docent"
+  },
+  "Dashboard": {
+    "orders": "Orders",
+    "menu": "Menu Management",
+    "reviews": "Private Reviews",
+    "report": "AI Weekly Report"
+  }
+}

@@ -1,0 +1,25 @@
+# Cloudflare 로컬 프리뷰(wrangler)용 환경 변수
+# 복사: cp .dev.vars.example .dev.vars 후 값 채우기
+# .dev.vars는 .gitignore에 포함되어 있습니다.
+
+NEXTJS_ENV=development
+
+# Supabase (배포 시 Cloudflare 대시보드에서도 동일 키 설정)
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# OpenAI
+OPENAI_API_KEY=sk-your-openai-api-key
+
+# Toss Payments
+NEXT_PUBLIC_TOSS_CLIENT_KEY=your-toss-client-key
+TOSS_SECRET_KEY=your-toss-secret-key
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+
+# App URL (배포 후 실제 도메인으로 변경)
+NEXT_PUBLIC_APP_URL=https://kurious.pages.dev

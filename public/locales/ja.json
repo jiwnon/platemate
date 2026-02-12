@@ -1,0 +1,19 @@
+{
+  "Home": {
+    "tagline": "QRで注文、あなたの言語で。AIと一緒に韓国料理を体験。",
+    "guestOrder": "お客様注文",
+    "dashboard": "オーナーダッシュボード"
+  },
+  "Order": {
+    "menu": "メニュー",
+    "cart": "カート",
+    "checkout": "お会計",
+    "docent": "AIドーセント"
+  },
+  "Dashboard": {
+    "orders": "注文",
+    "menu": "メニュー管理",
+    "reviews": "非公開レビュー",
+    "report": "AI週間レポート"
+  }
+}
