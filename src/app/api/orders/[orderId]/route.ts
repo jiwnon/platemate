@@ -53,3 +53,42 @@ export async function GET(_request: Request, { params }: Params) {
     );
   }
 }
+
+const VALID_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'completed', 'cancelled'] as const;
+
+export async function PATCH(request: Request, { params }: Params) {
+  try {
+    const { orderId } = await params;
+    if (!orderId) {
+      return NextResponse.json({ error: 'orderId required' }, { status: 400 });
+    }
+
+    const body = (await request.json()) as { status?: string };
+    const status = body.status;
+    if (!status || !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
+      return NextResponse.json(
+        { error: 'status required (pending|confirmed|preparing|ready|completed|cancelled)' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', orderId)
+      .select('id, status')
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: 'Order not found or update failed' }, { status: 404 });
+    }
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error('[orders/[orderId] PATCH]', err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : 'Unknown error' },
+      { status: 500 }
+    );
+  }
+}

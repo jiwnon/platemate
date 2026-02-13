@@ -19,14 +19,15 @@
 ## DB 스키마
 ```sql
 restaurants: id, name, slug, logo_url, name_i18n, created_at, updated_at
-tables: id, restaurant_id, name, qr_code, created_at, updated_at
+tables: id, restaurant_id, name, table_number, qr_code, created_at, updated_at
 menu_items: id, restaurant_id, name, description, name_i18n, description_i18n,
             price, image_url, docent_content, sort_order, is_available,
             created_at, updated_at
 orders: id, restaurant_id, table_id, status, total_amount, payment_status,
         locale, payment_provider, payment_key, created_at, updated_at
 order_items: id, order_id, menu_item_id, quantity, unit_price, options, created_at
-private_reviews: id, order_id, restaurant_id, rating, comment, created_at
+private_reviews: id, order_id, restaurant_id, rating, food_rating, service_rating,
+                 comment, liked_items (JSONB), created_at
 ```
 
 ## 완료된 기능
@@ -57,10 +58,27 @@ private_reviews: id, order_id, restaurant_id, rating, comment, created_at
 - 컴포넌트: CheckoutContent (결제 수단 선택), CheckoutComplete
 - 결제 성공 → orders.payment_status = 'paid'
 
+### ✅ Step A-5: 주문 완료 & 비공개 평가
+- CheckoutComplete: 결제 완료 30분 후 ReviewModal 자동 표시
+- ReviewModal: 음식/서비스 별점(1–5), 개선 의견, 좋았던 메뉴 체크박스
+- API: POST /api/reviews/create (private_reviews 저장)
+- GET /api/orders/[orderId]에 items(메뉴명) 포함
+
+### ✅ Step B: 사장님 대시보드
+- 경로: /[locale]/dashboard/[restaurantId]
+- **신규 주문**: status=pending 목록, Supabase Realtime 자동 갱신
+- **주문 카드**: 테이블 번호/이름, 메뉴 목록, 총 금액, 주문 시간, "완료" 버튼
+- **오늘 통계**: 주문 건수, 매출, 평균 객단가 (카드 3개)
+- API: GET /api/dashboard/[restaurantId], PATCH /api/orders/[orderId] (status)
+- 컴포넌트: DashboardContent, OrderCard, StatsCards
+- Realtime: orders 테이블 복제 활성화 필요 (`ALTER PUBLICATION supabase_realtime ADD TABLE orders;`)
+
 ## 주요 파일 경로
 ```
 src/
   app/[locale]/
+    dashboard/[restaurantId]/
+      page.tsx                  # 사장님 대시보드
     order/[restaurantId]/[tableId]/
       page.tsx                    # 메뉴 목록
       checkout/[orderId]/
@@ -69,9 +87,11 @@ src/
         fail/page.tsx             # 결제 실패
   api/
     ai/generate-docent/           # AI 도슨트 생성
+    dashboard/[restaurantId]/     # 대시보드 데이터 (pending 목록 + 오늘 통계)
     orders/
       create/                     # 주문 생성
-      [orderId]/                  # 주문 단건 조회 (GET)
+      [orderId]/                  # 주문 단건 조회 (GET), 상태 변경 (PATCH)
+    reviews/create/               # 비공개 평가 제출
     payments/
       toss/confirm/               # 토스 결제 승인
       stripe/
@@ -87,6 +107,11 @@ src/
     CartModal.tsx
     CheckoutContent.tsx           # 결제 수단 선택
     CheckoutComplete.tsx          # 결제 완료 화면
+    ReviewModal.tsx               # 비공개 평가 모달
+  components/dashboard/
+    DashboardContent.tsx           # 대시보드 (Realtime 구독)
+    OrderCard.tsx                 # 주문 카드 (완료 버튼)
+    StatsCards.tsx                # 오늘 통계 카드
   lib/
     supabase/                     # DB 클라이언트
     openai/client.ts              # OpenAI 연동
@@ -118,12 +143,6 @@ NEXT_PUBLIC_APP_URL
 ```
 
 ## 다음 할 일
-
-### Step A-5: 주문 완료 & 평가
-주문 30분 후 비공개 평가 UI
-
-### Step B: 사장님 대시보드
-실시간 주문 모니터링
 
 ### Step C: 인증
 사장님 로그인
