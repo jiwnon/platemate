@@ -32,12 +32,22 @@ weekly_reports: id, restaurant_id, week_start (DATE), report_json (JSONB), creat
                 UNIQUE(restaurant_id, week_start)
 ```
 
+## 마이그레이션 (순서대로 실행)
+```
+supabase/migrations/
+  20250212000000_initial_schema.sql    # restaurants, tables, menu_items, orders, order_items, private_reviews
+  20250212000001_order_page_fields.sql # tables.table_number, menu_items.category, spicy_level
+  20250212000002_ai_docent_columns.sql # AI 도슨트 관련 컬럼
+  20250212000003_reviews_food_service_liked.sql  # food_rating, service_rating, liked_items
+  20250212000004_weekly_reports.sql    # weekly_reports 테이블
+```
+
 ## 완료된 기능
 
 ### ✅ Step A-1: 메뉴 목록 페이지
 - 경로: /[locale]/order/[restaurantId]/[tableId]
 - 기능: 메뉴 카드, 카테고리 탭, 장바구니 바
-- 컴포넌트: OrderPageContent, OrderMenuCard, CartBar
+- 컴포넌트: OrderPageContent, OrderMenuCard, CartBar, MenuCard, LanguageSelector
 
 ### ✅ Step A-2: 메뉴 상세 모달
 - API: POST /api/ai/generate-docent
@@ -75,7 +85,7 @@ weekly_reports: id, restaurant_id, week_start (DATE), report_json (JSONB), creat
 - 컴포넌트: DashboardContent, OrderCard, StatsCards
 - Realtime: orders 테이블 복제 활성화 필요 (`ALTER PUBLICATION supabase_realtime ADD TABLE orders;`)
 
-### ✅ Step D: 주간 AI 리포트
+### ✅ Step C: 주간 AI 리포트
 - API: GET /api/dashboard/[restaurantId]/weekly-report
 - 지난 7일 집계: 매출·주문 건수, 메뉴별 판매 상위 5, 평균 평점, 저평점(3점 이하) 의견
 - OpenAI GPT-4o로 JSON 리포트 생성: sales_summary, top_insights, recommendations(3), warnings
@@ -86,86 +96,99 @@ weekly_reports: id, restaurant_id, week_start (DATE), report_json (JSONB), creat
 ```
 src/
   app/[locale]/
-    dashboard/[restaurantId]/
-      page.tsx                  # 사장님 대시보드
+    layout.tsx
+    page.tsx                        # 랜딩
+    dashboard/[restaurantId]/page.tsx
     order/[restaurantId]/[tableId]/
-      page.tsx                    # 메뉴 목록
-      checkout/[orderId]/
-        page.tsx                  # 결제 수단 선택 (토스 / Stripe)
-        success/page.tsx          # 결제 성공 (토스 또는 Stripe)
-        fail/page.tsx             # 결제 실패
-  api/
-    ai/generate-docent/           # AI 도슨트 생성
-    dashboard/[restaurantId]/     # 대시보드 데이터 (pending 목록 + 오늘 통계)
-      weekly-report/              # 주간 AI 리포트 (GET, 캐시)
-    orders/
-      create/                     # 주문 생성
-      [orderId]/                  # 주문 단건 조회 (GET), 상태 변경 (PATCH)
-    reviews/create/               # 비공개 평가 제출
-    payments/
-      toss/confirm/               # 토스 결제 승인
-      stripe/
-        create-session/           # Stripe Checkout Session 생성
-        verify-session/            # Stripe 결제 확인 (성공 페이지용)
-        webhook/                  # Stripe webhook (checkout.session.completed)
+      page.tsx, loading.tsx, error.tsx, not-found.tsx
+      checkout/[orderId]/page.tsx, success/page.tsx, fail/page.tsx
+  app/api/
+    ai/generate-docent/, ai/route.ts
+    dashboard/[restaurantId]/route.ts, weekly-report/route.ts
+    orders/create/, [orderId]/route.ts, route.ts
+    reviews/create/
+    payments/route.ts, toss/confirm/, stripe/create-session|verify-session|webhook/
   components/customer/
-    OrderPageContent.tsx
-    OrderMenuCard.tsx
-    CartBar.tsx
-    MenuDetailModal.tsx
-    DocentSection.tsx
-    CartModal.tsx
-    CheckoutContent.tsx           # 결제 수단 선택
-    CheckoutComplete.tsx          # 결제 완료 화면
-    ReviewModal.tsx               # 비공개 평가 모달
+    OrderPageContent, OrderMenuCard, CartBar, CartModal
+    MenuCard, MenuDetailModal, DocentSection, LanguageSelector
+    CheckoutContent, CheckoutComplete, ReviewModal
   components/dashboard/
-    DashboardContent.tsx           # 대시보드 (Realtime 구독)
-    OrderCard.tsx                 # 주문 카드 (완료 버튼)
-    StatsCards.tsx                # 오늘 통계 카드
-    WeeklyReportButton.tsx        # 주간 리포트 보기 버튼
-    WeeklyReportModal.tsx         # 주간 리포트 모달
+    DashboardContent, OrderCard, StatsCards, OrderList
+    WeeklyReportButton, WeeklyReportModal
+  components/shared/
+    LanguageSwitcher
   lib/
-    supabase/                     # DB 클라이언트
-    openai/client.ts              # OpenAI 연동
-    payments/toss.ts, stripe.ts   # 결제 연동
-    utils/menu.ts                 # getLocalizedName
+    supabase/client.ts, server.ts, middleware.ts
+    openai/client.ts
+    payments/toss.ts, stripe.ts
+    i18n/, utils/menu.ts, utils/cn.ts
+  types/
+    index.ts, database.types.ts
 ```
+
+## 스크립트
+| 명령 | 설명 |
+|------|------|
+| `npm run dev` | 개발 서버 |
+| `npm run build` | Next.js 프로덕션 빌드 |
+| `npm run start` | 프로덕션 서버 실행 |
+| `npm run lint` | ESLint |
+| `npm run preview` | OpenNext 빌드 후 로컬 Cloudflare Worker 실행 |
+| `npm run deploy` | OpenNext 빌드 후 Cloudflare 배포 |
+| `npm run upload` | 빌드 후 변경분만 Cloudflare 업로드 |
+| `npm run cf-typegen` | Wrangler env 타입 생성 |
+| `npm run db:generate` | Supabase 타입 생성 (로컬 연결 필요) |
+| `npm run db:push` | Supabase 마이그레이션 적용 |
 
 ## 환경 변수
 ```
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL
-NEXT_PUBLIC_SUPABASE_ANON_KEY
-SUPABASE_SERVICE_ROLE_KEY
-
-# OpenAI
+NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY
 OPENAI_API_KEY
-
-# 토스페이먼츠
-NEXT_PUBLIC_TOSS_CLIENT_KEY
-TOSS_SECRET_KEY
-
-# Stripe
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-STRIPE_SECRET_KEY
-STRIPE_WEBHOOK_SECRET
-
-# 앱 URL (선택)
-NEXT_PUBLIC_APP_URL
+NEXT_PUBLIC_TOSS_CLIENT_KEY, TOSS_SECRET_KEY
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET
+NEXT_PUBLIC_APP_URL  # 선택
 ```
+
+## 프로젝트 Skills (.agents/skills/)
+- **ui-ux-pro-max**: UI/UX 디자인, 팔레트, 타이포, 접근성
+- **vercel-react-best-practices**: React/Next 성능 (워터폴, 번들, RSC)
+- **supabase-postgres-best-practices**: Postgres/Supabase 쿼리·스키마
+- **vercel-react-native-skills**: React Native/Expo (모바일)
+- **next-upgrade**: Next.js 버전 업그레이드
+- **next-cache-components**: Next.js 16 Cache Components / PPR
+- **next-best-practices**: 파일 관례, RSC, 데이터 패턴
+- **agent-browser**: 브라우저 자동화
+- **vercel-composition-patterns**: React 컴포지션, compound components
+- **web-design-guidelines**: Web Interface Guidelines 리뷰
+- **find-skills**: agent skill 검색·설치 안내
+
+## 최적화 적용 사항
+- **주문 페이지 (order/.../page.tsx)**: restaurant, table, menuItems를 `Promise.all`로 한 번에 조회.
+- **GET /api/dashboard/[restaurantId]**: pending 주문과 오늘 통계 조회를 `Promise.all`로 병렬화. tables와 order_items도 병렬 조회.
+- **GET /api/dashboard/.../weekly-report**: 캐시 미스 시 orders와 private_reviews를 `Promise.all`로 병렬 조회.
+- **결제 success/fail 페이지 (next-best-practices)**: `useSearchParams()` 사용 시 전체 페이지 CSR 방지를 위해 서버 페이지에서 `<Suspense>`로 클라이언트 컴포넌트 감쌈. `CheckoutSuccessClient` / `CheckoutFailClient` 분리.
 
 ## 다음 할 일
 
-### Step C: 인증
-사장님 로그인
+**🎯 현재 완성도: 60~70%**
+
+- **✅ Step A-1 ~ A-5**: 고객 주문 시스템 (메뉴, AI 도슨트, 결제, 리뷰)
+- **✅ Step B**: 사장님 대시보드 (실시간 주문, 통계)
+- **✅ Step C**: 주간 AI 리포트 (GPT-4o 분석 + 캐싱)
 
 ---
 
-## 시작하기 (참고)
+- **🔜 Step D**: 사장님 인증 (로그인/회원가입)
+- **🔜 Step E**: 레스토랑/메뉴 관리 (CRUD)
+- **🔜 Step F**: PWA 최적화 & 배포
+
+---
+
+## 시작하기
 ```bash
 npm install
-cp .env.example .env.local   # 위 환경 변수 입력
+cp .env.example .env.local   # 환경 변수 입력
 npm run dev
 ```
-Supabase: `supabase/migrations/20250212000000_initial_schema.sql` 실행  
+Supabase: 마이그레이션 순서대로 SQL 실행 또는 `npm run db:push`  
 배포: [docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md)

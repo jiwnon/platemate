@@ -16,34 +16,25 @@ export default async function OrderPage({ params }: Props) {
 
   const supabase = await createClient();
 
-  const [{ data: restaurant, error: restaurantError }, { data: table, error: tableError }] =
-    await Promise.all([
-      supabase.from('restaurants').select('id, name, slug, logo_url, name_i18n, created_at, updated_at').eq('id', restaurantId).single(),
-      supabase.from('tables').select('id, restaurant_id, name, table_number, qr_code, created_at, updated_at').eq('id', tableId).single(),
-    ]);
+  const [
+    { data: restaurant, error: restaurantError },
+    { data: table, error: tableError },
+    { data: menuItems, error: menuError },
+  ] = await Promise.all([
+    supabase.from('restaurants').select('id, name, slug, logo_url, name_i18n, created_at, updated_at').eq('id', restaurantId).single(),
+    supabase.from('tables').select('id, restaurant_id, name, table_number, qr_code, created_at, updated_at').eq('id', tableId).single(),
+    supabase
+      .from('menu_items')
+      .select('id, restaurant_id, name, description, name_i18n, description_i18n, price, image_url, docent_content, sort_order, is_available, category, spicy_level, created_at, updated_at')
+      .eq('restaurant_id', restaurantId)
+      .eq('is_available', true)
+      .order('sort_order', { ascending: true }),
+  ]);
 
-  if (restaurantError || !restaurant) {
-    notFound();
-  }
-
-  if (tableError || !table) {
-    notFound();
-  }
-
-  if (table.restaurant_id !== restaurant.id) {
-    notFound();
-  }
-
-  const { data: menuItems, error: menuError } = await supabase
-    .from('menu_items')
-    .select('id, restaurant_id, name, description, name_i18n, description_i18n, price, image_url, docent_content, sort_order, is_available, category, spicy_level, created_at, updated_at')
-    .eq('restaurant_id', restaurantId)
-    .eq('is_available', true)
-    .order('sort_order', { ascending: true });
-
-  if (menuError) {
-    notFound();
-  }
+  if (restaurantError || !restaurant) notFound();
+  if (tableError || !table) notFound();
+  if (table.restaurant_id !== restaurant.id) notFound();
+  if (menuError) notFound();
 
   const restaurantTyped: Restaurant = {
     id: restaurant.id,

@@ -19,24 +19,28 @@ export async function GET(_request: Request, { params }: Params) {
     const supabase = await createClient();
     const todayStart = getTodayStartUTC();
 
-    const { data: pendingOrders, error: pendingError } = await supabase
-      .from('orders')
-      .select('id, table_id, status, total_amount, created_at')
-      .eq('restaurant_id', restaurantId)
-      .eq('status', 'pending')
-      .order('created_at', { ascending: true });
+    const [pendingResult, todayResult] = await Promise.all([
+      supabase
+        .from('orders')
+        .select('id, table_id, status, total_amount, created_at')
+        .eq('restaurant_id', restaurantId)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('orders')
+        .select('id, total_amount, payment_status')
+        .eq('restaurant_id', restaurantId)
+        .gte('created_at', todayStart)
+        .neq('status', 'cancelled'),
+    ]);
 
+    const { data: pendingOrders, error: pendingError } = pendingResult;
     if (pendingError) {
       console.error('[dashboard] pending', pendingError);
       return NextResponse.json({ error: 'Failed to fetch orders' }, { status: 500 });
     }
 
-    const { data: todayOrders } = await supabase
-      .from('orders')
-      .select('id, total_amount, payment_status')
-      .eq('restaurant_id', restaurantId)
-      .gte('created_at', todayStart)
-      .neq('status', 'cancelled');
+    const { data: todayOrders } = todayResult;
 
     const paidToday = (todayOrders ?? []).filter((o) => o.payment_status === 'paid');
     const todayOrderCount = paidToday.length;
@@ -54,17 +58,17 @@ export async function GET(_request: Request, { params }: Params) {
     }
 
     const tableIds = [...new Set(pendingOrders.map((o) => o.table_id))];
-    const { data: tables } = await supabase
-      .from('tables')
-      .select('id, name, table_number')
-      .in('id', tableIds);
-    const tableMap = new Map((tables ?? []).map((t) => [t.id, t]));
-
     const orderIds = pendingOrders.map((o) => o.id);
-    const { data: orderItems } = await supabase
-      .from('order_items')
-      .select('order_id, menu_item_id, quantity, unit_price')
-      .in('order_id', orderIds);
+    const [tablesResult, orderItemsResult] = await Promise.all([
+      supabase.from('tables').select('id, name, table_number').in('id', tableIds),
+      supabase
+        .from('order_items')
+        .select('order_id, menu_item_id, quantity, unit_price')
+        .in('order_id', orderIds),
+    ]);
+    const { data: tables } = tablesResult;
+    const { data: orderItems } = orderItemsResult;
+    const tableMap = new Map((tables ?? []).map((t) => [t.id, t]));
 
     const menuIds = [...new Set((orderItems ?? []).map((i) => i.menu_item_id))];
     const { data: menus } = await supabase

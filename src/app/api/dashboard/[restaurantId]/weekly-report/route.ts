@@ -45,13 +45,21 @@ export async function GET(_request: Request, { params }: Params) {
 
     const fromDate = getSevenDaysAgoUTC();
 
-    const { data: orders } = await supabase
-      .from('orders')
-      .select('id, total_amount')
-      .eq('restaurant_id', restaurantId)
-      .eq('payment_status', 'paid')
-      .gte('created_at', fromDate);
+    const [ordersResult, reviewsResult] = await Promise.all([
+      supabase
+        .from('orders')
+        .select('id, total_amount')
+        .eq('restaurant_id', restaurantId)
+        .eq('payment_status', 'paid')
+        .gte('created_at', fromDate),
+      supabase
+        .from('private_reviews')
+        .select('rating, food_rating, service_rating, comment')
+        .eq('restaurant_id', restaurantId)
+        .gte('created_at', fromDate),
+    ]);
 
+    const { data: orders } = ordersResult;
     const orderIds = (orders ?? []).map((o) => o.id);
     const totalRevenue = (orders ?? []).reduce((sum, o) => sum + Number(o.total_amount), 0);
     const orderCount = orders?.length ?? 0;
@@ -80,11 +88,7 @@ export async function GET(_request: Request, { params }: Params) {
       }
     }
 
-    const { data: reviews } = await supabase
-      .from('private_reviews')
-      .select('rating, food_rating, service_rating, comment')
-      .eq('restaurant_id', restaurantId)
-      .gte('created_at', fromDate);
+    const { data: reviews } = reviewsResult;
 
     let avgRating: number | null = null;
     const lowRatedComments: string[] = [];
