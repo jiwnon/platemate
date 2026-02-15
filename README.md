@@ -54,6 +54,12 @@ npm run dev
 - **OpenAI API 키 발급:** [docs/OPENAI_API_KEY.md](docs/OPENAI_API_KEY.md) 참고
 - Supabase API 키가 필요하면 말해 주세요.
 
+## Cursor + Agent Skills
+
+이 레포에는 **`.agents/skills/`** 가 포함되어 있습니다. Cursor에서 레포를 클론하면 동일한 Agent Skills(Next.js, React, Supabase 등 베스트 프랙티스)가 적용된 상태로 개발할 수 있습니다. 별도 설치 없이 `npm install` 후 바로 사용하면 됩니다.
+
+- 스킬 목록·역할: [PROGRESS.md#프로젝트-Skills](PROGRESS.md) 참고.
+
 ## 프로젝트 구조
 
 ```
