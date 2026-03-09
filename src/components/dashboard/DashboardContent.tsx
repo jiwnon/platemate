@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { StatsCards, type DashboardStats } from './StatsCards';
 import { OrderCard, type DashboardOrder } from './OrderCard';
@@ -8,6 +9,7 @@ import { WeeklyReportButton } from './WeeklyReportButton';
 
 type Props = {
   restaurantId: string;
+  locale: string;
 };
 
 type DashboardData = {
@@ -21,7 +23,7 @@ async function fetchDashboard(restaurantId: string): Promise<DashboardData> {
   return res.json();
 }
 
-export function DashboardContent({ restaurantId }: Props) {
+export function DashboardContent({ restaurantId, locale }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +101,27 @@ export function DashboardContent({ restaurantId }: Props) {
       <div className="mx-auto max-w-4xl space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-bold text-gray-900">사장님 대시보드</h1>
-          <WeeklyReportButton restaurantId={restaurantId} />
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/${locale}/dashboard/${restaurantId}/menu`}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              메뉴 관리
+            </Link>
+            <Link
+              href={`/${locale}/dashboard/${restaurantId}/tables`}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              테이블 관리
+            </Link>
+            <Link
+              href={`/${locale}/dashboard/${restaurantId}/settings`}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            >
+              기본 정보
+            </Link>
+            <WeeklyReportButton restaurantId={restaurantId} />
+          </div>
         </div>
 
         <section>

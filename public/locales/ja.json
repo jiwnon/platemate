@@ -1,1 +1,65 @@
-{"Home":{"tagline":"QRで注文、あなたの言語で。AIと一緒に韓国料理を体験。","guestOrder":"お客様注文","dashboard":"オーナーダッシュボード"},"Order":{"menu":"メニュー","cart":"カート","checkout":"お会計","docent":"AIドーセント","placeOrder":"注文する","categoryAll":"すべて","categoryMain":"メイン","categorySide":"サイド","categoryDrink":"ドリンク","restaurantNotFound":"店舗が見つかりません。","tableNotFound":"テーブル情報が見つかりません。","noMenu":"メニューがありません。"},"cartModal":{"title":"カート","close":"閉じる","empty":"カートは空です","total":"合計","placeOrder":"注文する","submitting":"注文中..."},"menuDetail":{"close":"閉じる","docentTitle":"AIドーセント","culturalContext":"文化的背景","ingredients":"主な食材","recommendation":"おすすめ","quantity":"数量","addToCart":"カートに追加","loading":"AIが説明を作成しています...","error":"説明を読み込めませんでした。"},"Dashboard":{"orders":"注文","menu":"メニュー管理","reviews":"非公開レビュー","report":"AI週間レポート"},"checkout":{"complete":"注文完了！"}}
+{
+  "Home": {
+    "tagline": "QRで注文。あなたの言語で。AIと韓国料理を体験。",
+    "guestOrder": "お客様注文",
+    "dashboard": "オーナーダッシュボード"
+  },
+  "Order": {
+    "menu": "メニュー",
+    "cart": "カート",
+    "checkout": "決済",
+    "docent": "AIドーセント",
+    "placeOrder": "注文する",
+    "categoryAll": "すべて",
+    "categoryMain": "メイン",
+    "categorySide": "サイド",
+    "categoryDrink": "ドリンク",
+    "restaurantNotFound": "店舗が見つかりません。",
+    "tableNotFound": "テーブルが見つかりません。",
+    "noMenu": "メニューがありません。"
+  },
+  "cartModal": {
+    "title": "カート",
+    "close": "閉じる",
+    "empty": "カートは空です",
+    "total": "合計",
+    "placeOrder": "注文する",
+    "submitting": "送信中..."
+  },
+  "menuDetail": {
+    "close": "閉じる",
+    "docentTitle": "AIドーセント",
+    "culturalContext": "文化背景",
+    "ingredients": "主な食材",
+    "recommendation": "おすすめ",
+    "quantity": "数量",
+    "addToCart": "カートに追加",
+    "loading": "AI紹介を生成中...",
+    "error": "紹介を読み込めませんでした。"
+  },
+  "Dashboard": {
+    "orders": "注文",
+    "menu": "メニュー管理",
+    "reviews": "非公開評価",
+    "report": "週間レポート"
+  },
+  "checkout": {
+    "complete": "注文完了！"
+  },
+  "Auth": {
+    "login": "ログイン",
+    "signUp": "会員登録",
+    "email": "メール",
+    "password": "パスワード",
+    "loginTitle": "オーナーログイン",
+    "signUpTitle": "アカウント作成",
+    "submitLogin": "ログイン",
+    "submitSignUp": "登録",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "hasAccount": "すでにアカウントをお持ちですか？",
+    "loginError": "ログインに失敗しました",
+    "signUpSuccess": "登録しました。確認メールをご確認ください。",
+    "goToLogin": "ログイン",
+    "backToHome": "ホームへ"
+  }
+}

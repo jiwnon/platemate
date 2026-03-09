@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser, getOwnedRestaurantIds } from '@/lib/auth/server';
 import { generateWeeklyReport, type WeeklyReportAggregate } from '@/lib/openai/client';
 
 type Params = { params: Promise<{ restaurantId: string }> };
@@ -27,6 +28,15 @@ export async function GET(_request: Request, { params }: Params) {
     const { restaurantId } = await params;
     if (!restaurantId) {
       return NextResponse.json({ error: 'restaurantId required' }, { status: 400 });
+    }
+
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const owned = await getOwnedRestaurantIds();
+    if (!owned.includes(restaurantId)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const supabase = await createClient();

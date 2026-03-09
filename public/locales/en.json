@@ -1,1 +1,65 @@
-{"Home":{"tagline":"Scan QR, order in your language. Experience Korean food with AI.","guestOrder":"Guest Order","dashboard":"Owner Dashboard"},"Order":{"menu":"Menu","cart":"Cart","checkout":"Checkout","docent":"AI Docent","placeOrder":"Place Order","categoryAll":"All","categoryMain":"Main","categorySide":"Side","categoryDrink":"Drink","restaurantNotFound":"Restaurant not found.","tableNotFound":"Table not found.","noMenu":"No menu items available."},"cartModal":{"title":"Cart","close":"Close","empty":"Your cart is empty","total":"Total","placeOrder":"Place Order","submitting":"Placing order..."},"menuDetail":{"close":"Close","docentTitle":"AI Docent","culturalContext":"Cultural context","ingredients":"Main ingredients","recommendation":"Recommendation","quantity":"Quantity","addToCart":"Add to cart","loading":"Generating AI description...","error":"Could not load description."},"Dashboard":{"orders":"Orders","menu":"Menu Management","reviews":"Private Reviews","report":"AI Weekly Report"},"checkout":{"complete":"Order complete!"}}
+{
+  "Home": {
+    "tagline": "Order by QR. In your language. Experience Korean food with AI.",
+    "guestOrder": "Guest order",
+    "dashboard": "Owner dashboard"
+  },
+  "Order": {
+    "menu": "Menu",
+    "cart": "Cart",
+    "checkout": "Checkout",
+    "docent": "AI docent",
+    "placeOrder": "Place order",
+    "categoryAll": "All",
+    "categoryMain": "Main",
+    "categorySide": "Side",
+    "categoryDrink": "Drinks",
+    "restaurantNotFound": "Restaurant not found.",
+    "tableNotFound": "Table not found.",
+    "noMenu": "No menu items."
+  },
+  "cartModal": {
+    "title": "Cart",
+    "close": "Close",
+    "empty": "Cart is empty",
+    "total": "Total",
+    "placeOrder": "Place order",
+    "submitting": "Submitting..."
+  },
+  "menuDetail": {
+    "close": "Close",
+    "docentTitle": "AI docent",
+    "culturalContext": "Cultural context",
+    "ingredients": "Ingredients",
+    "recommendation": "Recommendation",
+    "quantity": "Quantity",
+    "addToCart": "Add to cart",
+    "loading": "Generating AI intro...",
+    "error": "Could not load intro."
+  },
+  "Dashboard": {
+    "orders": "Orders",
+    "menu": "Menu",
+    "reviews": "Reviews",
+    "report": "Weekly report"
+  },
+  "checkout": {
+    "complete": "Order complete!"
+  },
+  "Auth": {
+    "login": "Log in",
+    "signUp": "Sign up",
+    "email": "Email",
+    "password": "Password",
+    "loginTitle": "Owner login",
+    "signUpTitle": "Create account",
+    "submitLogin": "Log in",
+    "submitSignUp": "Sign up",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "loginError": "Login failed",
+    "signUpSuccess": "Signed up. Please check your email to confirm.",
+    "goToLogin": "Log in",
+    "backToHome": "Back to home"
+  }
+}

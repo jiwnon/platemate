@@ -15,32 +15,34 @@
     "db:push": "supabase db push"
   },
   "dependencies": {
-    "next": "^15.0.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@supabase/supabase-js": "^2.45.0",
+    "@stripe/stripe-js": "^4.8.0",
     "@supabase/ssr": "^0.5.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "clsx": "^2.1.1",
+    "framer-motion": "^11.11.0",
+    "next": "^15.0.0",
     "next-intl": "^3.25.0",
     "next-pwa": "^5.6.0",
-    "recharts": "^2.13.0",
     "openai": "^4.73.0",
-    "@stripe/stripe-js": "^4.8.0",
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.13.0",
     "stripe": "^17.4.0",
-    "clsx": "^2.1.1",
-    "tailwind-merge": "^2.5.4",
-    "framer-motion": "^11.11.0"
+    "tailwind-merge": "^2.5.4"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.0.0",
-    "wrangler": "^4.59.0",
-    "typescript": "^5.6.0",
     "@types/node": "^22.9.0",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "tailwindcss": "^3.4.15",
-    "postcss": "^8.4.49",
     "autoprefixer": "^10.4.20",
     "eslint": "^9.15.0",
-    "eslint-config-next": "^15.0.0"
+    "eslint-config-next": "^15.0.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.15",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.59.0"
   }
 }

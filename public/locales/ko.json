@@ -1,1 +1,65 @@
-{"Home":{"tagline":"QR로 주문하고, AI와 함께 한국 음식을 경험하세요","guestOrder":"손님 주문하기","dashboard":"사장님 대시보드"},"Order":{"menu":"메뉴","cart":"장바구니","checkout":"결제하기","docent":"AI 도슨트","placeOrder":"주문하기","categoryAll":"전체","categoryMain":"메인","categorySide":"사이드","categoryDrink":"음료","restaurantNotFound":"식당을 찾을 수 없습니다.","tableNotFound":"테이블 정보를 찾을 수 없습니다.","noMenu":"등록된 메뉴가 없습니다."},"cartModal":{"title":"장바구니","close":"닫기","empty":"장바구니가 비어 있어요","total":"총 결제 금액","placeOrder":"주문하기","submitting":"주문 처리 중..."},"menuDetail":{"close":"닫기","docentTitle":"AI 도슨트","culturalContext":"문화적 배경","ingredients":"주요 재료","recommendation":"추천","quantity":"수량","addToCart":"담기","loading":"AI가 설명을 만들고 있어요...","error":"설명을 불러오지 못했어요."},"Dashboard":{"orders":"주문 현황","menu":"메뉴 관리","reviews":"비공개 평가","report":"AI 주간 리포트"},"checkout":{"complete":"주문 완료!"}}
+{
+  "Home": {
+    "tagline": "QR로 주문하세요. 여러 언어로. AI와 함께 한국 음식을 경험하세요.",
+    "guestOrder": "손님 주문",
+    "dashboard": "사장님 대시보드"
+  },
+  "Order": {
+    "menu": "메뉴",
+    "cart": "장바구니",
+    "checkout": "결제",
+    "docent": "AI 도슨트",
+    "placeOrder": "주문하기",
+    "categoryAll": "전체",
+    "categoryMain": "메인",
+    "categorySide": "사이드",
+    "categoryDrink": "음료",
+    "restaurantNotFound": "레스토랑을 찾을 수 없습니다.",
+    "tableNotFound": "테이블 정보를 찾을 수 없습니다.",
+    "noMenu": "메뉴가 없습니다."
+  },
+  "cartModal": {
+    "title": "장바구니",
+    "close": "닫기",
+    "empty": "장바구니가 비어 있습니다",
+    "total": "합계",
+    "placeOrder": "주문하기",
+    "submitting": "제출 중..."
+  },
+  "menuDetail": {
+    "close": "닫기",
+    "docentTitle": "AI 도슨트",
+    "culturalContext": "문화 배경",
+    "ingredients": "주요 재료",
+    "recommendation": "추천",
+    "quantity": "수량",
+    "addToCart": "장바구니에 담기",
+    "loading": "AI 소개 생성 중...",
+    "error": "소개를 불러올 수 없습니다."
+  },
+  "Dashboard": {
+    "orders": "주문",
+    "menu": "메뉴 관리",
+    "reviews": "비공개 평가",
+    "report": "AI 주간 리포트"
+  },
+  "checkout": {
+    "complete": "주문 완료!"
+  },
+  "Auth": {
+    "login": "로그인",
+    "signUp": "회원가입",
+    "email": "이메일",
+    "password": "비밀번호",
+    "loginTitle": "사장님 로그인",
+    "signUpTitle": "계정 만들기",
+    "submitLogin": "로그인",
+    "submitSignUp": "가입하기",
+    "noAccount": "아직 계정이 없으신가요?",
+    "hasAccount": "이미 계정이 있으신가요?",
+    "loginError": "로그인에 실패했습니다",
+    "signUpSuccess": "가입이 완료되었습니다. 확인 이메일을 확인해 주세요.",
+    "goToLogin": "로그인하기",
+    "backToHome": "홈으로"
+  }
+}

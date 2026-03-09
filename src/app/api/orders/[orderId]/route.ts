@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser, getOwnedRestaurantIds } from '@/lib/auth/server';
 
 type Params = { params: Promise<{ orderId: string }> };
 
@@ -63,6 +64,11 @@ export async function PATCH(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'orderId required' }, { status: 400 });
     }
 
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = (await request.json()) as { status?: string };
     const status = body.status;
     if (!status || !VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number])) {
@@ -73,6 +79,19 @@ export async function PATCH(request: Request, { params }: Params) {
     }
 
     const supabase = await createClient();
+    const { data: order, error: fetchError } = await supabase
+      .from('orders')
+      .select('id, restaurant_id')
+      .eq('id', orderId)
+      .single();
+    if (fetchError || !order) {
+      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+    const owned = await getOwnedRestaurantIds();
+    if (!owned.includes(order.restaurant_id)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { data, error } = await supabase
       .from('orders')
       .update({ status, updated_at: new Date().toISOString() })

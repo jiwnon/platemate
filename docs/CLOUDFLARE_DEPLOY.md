@@ -2,6 +2,16 @@
 
 Next.js 앱을 **OpenNext Cloudflare** 어댑터로 빌드해 Cloudflare Workers/Pages에 배포하는 방법입니다.
 
+## npm run deploy 전 체크리스트
+
+- [ ] **wrangler.jsonc** 확인: `main`, `assets`, `services`, `images` 설정 유지
+- [ ] **환경 변수** Cloudflare 대시보드에 등록 (아래 표 참고, Secret은 암호화 체크)
+- [ ] **NEXT_PUBLIC_APP_URL** 배포 URL로 설정 (예: `https://kurious.xxx.pages.dev`) — QR 코드·리다이렉트에 필요
+- [ ] **Stripe Webhook** 배포 URL 기준으로 엔드포인트 재설정 후 `STRIPE_WEBHOOK_SECRET` 갱신
+- [ ] 로컬에서 `npm run build` 성공 확인
+- [ ] (선택) `npm run preview` 로 로컬 Worker 실행 후 동작 확인
+- [ ] `npm run deploy` 실행 후 대시보드에서 배포 상태 확인
+
 ## 사전 준비
 
 - Node.js 18+
@@ -35,7 +45,8 @@ npm install
 | `STRIPE_SECRET_KEY` | (선택) Stripe secret | **Yes** |
 | `STRIPE_WEBHOOK_SECRET` | (선택) Stripe webhook secret | **Yes** |
 
-- **Secret** 항목은 "Encrypt" 체크 후 입력합니다.
+**Cloudflare에 등록할 때:** Workers & Pages → 프로젝트 → **Settings** → **Variables and Secrets**에서 위 변수 추가.  
+**Secret** 항목은 "Encrypt" 체크 후 입력합니다.
 - Supabase 키가 필요하면 말해 주시면 발급/설정 방법 안내해 드립니다.
 
 ### 빌드 및 배포
@@ -93,7 +104,17 @@ npm run preview
 - **배포 전 확인**: `npm run preview` (Cloudflare Worker 환경, `.dev.vars` 사용)
 - **실제 배포**: Cloudflare 대시보드에 환경 변수 설정 후 `npm run deploy` 또는 Git 푸시
 
-## 5. 문제 해결
+## 5. wrangler.jsonc 설정 요약
+
+- `main`: `.open-next/worker.js` (OpenNext 빌드 결과)
+- `assets`: `.open-next/assets` (정적 자산)
+- `services`: Worker 자기 참조 (필요 시)
+- `images`: 이미지 최적화 바인딩
+- `compatibility_date`, `compatibility_flags`: Node 호환
+
+배포 시 `npm run deploy`가 `opennextjs-cloudflare build`로 `.open-next`를 만든 뒤 `wrangler deploy`를 실행합니다. 별도 수정 없이 사용하면 됩니다.
+
+## 6. 문제 해결
 
 - **Worker 크기 제한**: Free 플랜 약 3MB. 무료 한도 초과 시 Paid 플랜 또는 코드/번들 최적화 필요.
 - **환경 변수 미적용**: 대시보드에서 Variables/Secrets 저장 후 재배포.

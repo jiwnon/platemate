@@ -1,0 +1,25 @@
+{
+  "name": "QRIOUS",
+  "short_name": "QRIOUS",
+  "description": "QR 주문 · 다국어 메뉴 · AI 도슨트. 한국 음식점을 위한 주문 앱.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#ec751c",
+  "background_color": "#fef7ee",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -40,6 +40,7 @@ supabase/migrations/
   20250212000002_ai_docent_columns.sql # AI 도슨트 관련 컬럼
   20250212000003_reviews_food_service_liked.sql  # food_rating, service_rating, liked_items
   20250212000004_weekly_reports.sql    # weekly_reports 테이블
+  20250212000005_restaurant_owners.sql # restaurant_owners (사장님–레스토랑 소유)
 ```
 
 ## 완료된 기능
@@ -92,19 +93,72 @@ supabase/migrations/
 - 캐시: weekly_reports 테이블, 같은 주(월요일 0시 UTC 기준) 재요청 시 캐시 반환
 - 컴포넌트: WeeklyReportButton, WeeklyReportModal (대시보드 상단 "주간 리포트 보기")
 
+### ✅ Step D: 사장님 인증
+- Supabase Auth 이메일/비밀번호 로그인·회원가입
+- 경로: /[locale]/login, /[locale]/signup
+- 미들웨어: /dashboard 접근 시 비로그인 → /[locale]/login 리다이렉트 (redirect 쿼리 유지)
+- 로그인 후 /[locale]/dashboard: 소유 레스토랑 목록 (1개면 해당 대시보드로 자동 이동)
+- 로그인한 사장님만 자신의 레스토랑 대시보드 접근: assertCanAccessRestaurant(restaurantId, locale)
+- API 보호: GET/PATCH 대시보드·주간리포트·주문 상태 변경 시 401/403
+- DB: restaurant_owners (user_id, restaurant_id) — 소유 관계는 수동 또는 Step E에서 연동
+- 컴포넌트: LoginForm, SignUpForm
+- lib/auth/server: getCurrentUser, getOwnedRestaurantIds, assertCanAccessRestaurant, requireUser
+
+### ✅ Step E-1: 메뉴 관리
+- 경로: /[locale]/dashboard/[restaurantId]/menu (대시보드 내 "메뉴 관리" 링크)
+- API: GET/POST /api/dashboard/[restaurantId]/menu, PATCH/DELETE .../menu/[menuItemId], POST .../menu/upload (이미지)
+- 메뉴 목록: 카테고리(메인/사이드/음료)별 정렬, 품절 토글, 수정/삭제
+- 메뉴 추가·수정: 이름, 설명, 가격, 카테고리, 이미지(Supabase Storage), 품절 여부
+- 이미지 업로드: Supabase Storage 버킷 `menu-images` (public). 서버에서 SUPABASE_SERVICE_ROLE_KEY로 업로드.
+- 컴포넌트: MenuManageContent, MenuFormModal. lib/supabase/admin.ts (서버 전용).
+- 주문에 사용된 메뉴 삭제 시 409 안내.
+
+### ✅ Step E-2: 테이블 & QR코드 관리
+- 경로: /[locale]/dashboard/[restaurantId]/tables
+- API: GET/POST /api/dashboard/[restaurantId]/tables, PATCH/DELETE .../tables/[tableId], GET .../tables/[tableId]/qr (PNG 다운로드)
+- 테이블 추가/수정/삭제 (이름, 테이블 번호)
+- QR코드: 주문 URL `/{locale}/order/{restaurantId}/{tableId}` 기반 생성 (qrcode 패키지), 쿼리 baseUrl·locale 지원
+- 컴포넌트: TableManageContent, TableFormModal
+
+### ✅ Step E-3: 레스토랑 기본 정보 수정
+- 경로: /[locale]/dashboard/[restaurantId]/settings
+- API: GET/PATCH /api/dashboard/[restaurantId]/restaurant, POST .../restaurant/upload (로고)
+- 이름, 로고 이미지(Storage `menu-images/logos/{restaurantId}/`), 다국어 이름(name_i18n: ko/en/zh/ja)
+- 로고 업로드는 E-1 upload 패턴 동일 (같은 버킷, 경로만 logos/ 구분)
+- 컴포넌트: RestaurantSettingsContent
+
+### ✅ Step E-4: 신규 레스토랑 등록 자동화
+- 소유 레스토랑 0개 시 /[locale]/dashboard 접근 → /[locale]/dashboard/new 리다이렉트
+- 경로: /[locale]/dashboard/new (이름·슬러그 입력 폼)
+- API: POST /api/dashboard/restaurants (name, slug) — 레스토랑 생성 후 restaurant_owners에 현재 사용자 자동 삽입 (createAdminClient 사용)
+- 슬러그 중복 시 409. 컴포넌트: NewRestaurantForm
+
+### ✅ Step F: PWA 최적화 & 배포
+- **F-1 PWA**: manifest.json (앱명 QRIOUS, theme_color #ec751c, 아이콘 192/512), viewport.themeColor, 오프라인 fallback (offline.html), next-pwa fallbacks.document, A2HS 가능
+- **F-2 성능**: next/image 전역 사용 유지, next/font (Noto_Sans_KR latin+latin-ext, preload), loading.tsx 추가 (dashboard, menu, tables, settings, new, login 등)
+- **F-3 Cloudflare**: wrangler.jsonc 점검, 환경 변수·배포 체크리스트 정리 (docs/CLOUDFLARE_DEPLOY.md)
+- **F-4**: PROGRESS.md·README.md 최종 반영
+
 ## 주요 파일 경로
 ```
 src/
   app/[locale]/
     layout.tsx
     page.tsx                        # 랜딩
-    dashboard/[restaurantId]/page.tsx
+    dashboard/page.tsx, dashboard/[restaurantId]/page.tsx, dashboard/[restaurantId]/menu/page.tsx
+    dashboard/[restaurantId]/tables/page.tsx, dashboard/[restaurantId]/settings/page.tsx
+    dashboard/new/page.tsx
+    login/page.tsx, signup/page.tsx
     order/[restaurantId]/[tableId]/
       page.tsx, loading.tsx, error.tsx, not-found.tsx
       checkout/[orderId]/page.tsx, success/page.tsx, fail/page.tsx
   app/api/
     ai/generate-docent/, ai/route.ts
+    dashboard/restaurants/route.ts
     dashboard/[restaurantId]/route.ts, weekly-report/route.ts
+    menu/route.ts, menu/upload/route.ts, menu/[menuItemId]/route.ts
+    tables/route.ts, tables/[tableId]/route.ts, tables/[tableId]/qr/route.ts
+    restaurant/route.ts, restaurant/upload/route.ts
     orders/create/, [orderId]/route.ts, route.ts
     reviews/create/
     payments/route.ts, toss/confirm/, stripe/create-session|verify-session|webhook/
@@ -113,12 +167,16 @@ src/
     MenuCard, MenuDetailModal, DocentSection, LanguageSelector
     CheckoutContent, CheckoutComplete, ReviewModal
   components/dashboard/
-    DashboardContent, OrderCard, StatsCards, OrderList
+    DashboardContent, OrderCard, StatsCards, OrderList, MenuManageContent
+    TableManageContent, RestaurantSettingsContent, NewRestaurantForm
     WeeklyReportButton, WeeklyReportModal
+  components/auth/
+    LoginForm, SignUpForm
   components/shared/
     LanguageSwitcher
   lib/
-    supabase/client.ts, server.ts, middleware.ts
+    auth/server.ts
+    supabase/client.ts, server.ts, middleware.ts, admin.ts
     openai/client.ts
     payments/toss.ts, stripe.ts
     i18n/, utils/menu.ts, utils/cn.ts
@@ -172,17 +230,14 @@ NEXT_PUBLIC_APP_URL  # 선택
 
 ## 다음 할 일
 
-**🎯 현재 완성도: 60~70%**
+**🎯 현재 완성도: 100%**
 
 - **✅ Step A-1 ~ A-5**: 고객 주문 시스템 (메뉴, AI 도슨트, 결제, 리뷰)
 - **✅ Step B**: 사장님 대시보드 (실시간 주문, 통계)
 - **✅ Step C**: 주간 AI 리포트 (GPT-4o 분석 + 캐싱)
-
----
-
-- **🔜 Step D**: 사장님 인증 (로그인/회원가입)
-- **🔜 Step E**: 레스토랑/메뉴 관리 (CRUD)
-- **🔜 Step F**: PWA 최적화 & 배포
+- **✅ Step D**: 사장님 인증 (Supabase Auth 로그인/회원가입, 대시보드·API 보호)
+- **✅ Step E-1 ~ E-4**: 메뉴·테이블·QR·레스토랑 정보·신규 등록
+- **✅ Step F**: PWA (manifest, 오프라인, A2HS), 성능(loading/폰트), Cloudflare 체크리스트, 문서 정리
 
 ---
 
@@ -193,4 +248,5 @@ cp .env.example .env.local   # 환경 변수 입력
 npm run dev
 ```
 Supabase: 마이그레이션 순서대로 SQL 실행 또는 `npm run db:push`  
+메뉴 이미지: Storage 버킷 `menu-images` 생성 후 Public으로 설정 (Supabase Dashboard → Storage)  
 배포: [docs/CLOUDFLARE_DEPLOY.md](docs/CLOUDFLARE_DEPLOY.md)
