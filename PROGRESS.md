@@ -68,6 +68,7 @@ supabase/migrations/
   - API: POST /api/payments/stripe/create-session
   - Webhook: POST /api/payments/stripe/webhook (payment_status 업데이트)
   - 성공 시 verify-session으로 주문 상태 동기화
+  - ⚠️ **현재 UI에서 임시 비활성화** — 사업자 등록 완료 후 활성화 예정
 - 컴포넌트: CheckoutContent (결제 수단 선택), CheckoutComplete
 - 결제 성공 → orders.payment_status = 'paid'
 
@@ -103,6 +104,7 @@ supabase/migrations/
 - DB: restaurant_owners (user_id, restaurant_id) — 소유 관계는 수동 또는 Step E에서 연동
 - 컴포넌트: LoginForm, SignUpForm
 - lib/auth/server: getCurrentUser, getOwnedRestaurantIds, assertCanAccessRestaurant, requireUser
+- 로그인 페이지에 MVP 테스트 계정 안내 표시 (test@te.st / test1234)
 
 ### ✅ Step E-1: 메뉴 관리
 - 경로: /[locale]/dashboard/[restaurantId]/menu (대시보드 내 "메뉴 관리" 링크)
@@ -132,6 +134,12 @@ supabase/migrations/
 - 경로: /[locale]/dashboard/new (이름·슬러그 입력 폼)
 - API: POST /api/dashboard/restaurants (name, slug) — 레스토랑 생성 후 restaurant_owners에 현재 사용자 자동 삽입 (createAdminClient 사용)
 - 슬러그 중복 시 409. 컴포넌트: NewRestaurantForm
+
+### ✅ Step E-5: UX 개선 (MVP 배포 후)
+- 손님 주문 페이지 헤더에 홈 버튼 추가 (랜딩으로 이동)
+- 손님 주문 페이지에 로그아웃 버튼 추가
+- 결제 버튼 텍스트 개선 (카드 → 페이/카드 결제)
+- 언어 변경 후 한국어로 돌아오지 않는 버그 수정
 
 ### ✅ Step F: PWA 최적화 & 배포
 - **F-1 PWA**: manifest.json (앱명 QRIOUS, theme_color #ec751c, 아이콘 192/512), viewport.themeColor, 오프라인 fallback (offline.html), next-pwa fallbacks.document, A2HS 가능
