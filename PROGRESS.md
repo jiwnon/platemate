@@ -1,7 +1,7 @@
-# Kurious 프로젝트 진행 상황
+# Platemate 프로젝트 진행 상황
 
 ## 서비스 개요
-외국인 관광객용 QR 주문 시스템 (Korea + Curious)
+외국인 관광객용 QR 주문 시스템 (platem8.xyz)
 - 다국어 (한/영/중/일)
 - AI 도슨트 (OpenAI GPT-4o-mini)
 - 결제: 토스페이먼츠(한국 카드), Stripe(알리페이, 위챗페이, 카드)

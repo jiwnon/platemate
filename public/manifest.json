@@ -1,6 +1,6 @@
 {
-  "name": "QRIOUS",
-  "short_name": "QRIOUS",
+  "name": "Platemate",
+  "short_name": "Pl8m8",
   "description": "QR 주문 · 다국어 메뉴 · AI 도슨트. 한국 음식점을 위한 주문 앱.",
   "start_url": "/",
   "scope": "/",

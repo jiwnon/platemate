@@ -14,11 +14,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Kurious - QR Order for Korean Restaurants',
+  title: 'Platemate - QR Order for Korean Restaurants',
   description:
     'Scan QR, order in your language. AI docent, multi-language menu, and easy payment for travelers in Korea.',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, title: 'QRIOUS' },
+  appleWebApp: { capable: true, title: 'Platemate' },
   icons: { apple: '/icons/icon-192x192.png' },
 };
 

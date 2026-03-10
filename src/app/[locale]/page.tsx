@@ -5,7 +5,7 @@ export default function HomePage() {
   const t = useTranslations('Home');
   return (
     <main className="min-h-screen flex flex-col items-center justify-center p-6">
-      <h1 className="text-4xl font-bold text-primary-600 mb-2">Kurious</h1>
+      <h1 className="text-4xl font-bold text-primary-600 mb-2">Platemate</h1>
       <p className="text-gray-600 text-center mb-8">{t('tagline')}</p>
       <div className="flex gap-4">
         <Link

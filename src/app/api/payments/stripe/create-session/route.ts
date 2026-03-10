@@ -61,7 +61,7 @@ export async function POST(request: Request) {
             unit_amount: amountUsdCents,
             product_data: {
               name: `Order ${orderId.slice(0, 8)}`,
-              description: 'Kurious restaurant order',
+              description: 'Platemate restaurant order',
             },
           },
         },
