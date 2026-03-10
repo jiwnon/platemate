@@ -180,14 +180,7 @@ export function CheckoutContent({
             >
               한국 카드 (토스페이먼츠)
             </button>
-            <button
-              type="button"
-              onClick={handleStripePay}
-              disabled={paying}
-              className="w-full rounded-xl border-2 border-purple-600 bg-white py-3 font-medium text-purple-600 transition hover:bg-purple-50 disabled:opacity-50"
-            >
-              외국인 결제 (Alipay, WeChat Pay, Card)
-            </button>
+            {/* 외국인 결제 (Stripe): 사업자 등록 후 활성화 예정 */}
           </div>
 
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
