@@ -161,7 +161,6 @@ export function CheckoutContent({
       <Script
         src="https://js.tosspayments.com/v1/payment"
         strategy="afterInteractive"
-        onLoad={() => setPaying((p) => p)}
       />
       <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">

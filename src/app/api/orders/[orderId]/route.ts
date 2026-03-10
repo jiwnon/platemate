@@ -64,7 +64,7 @@ const VALID_STATUSES = ['pending', 'confirmed', 'preparing', 'ready', 'completed
 export async function PATCH(request: Request, { params }: Params) {
   try {
     const { orderId } = await params;
-    if (!orderId) {
+    if (!orderId || !UUID_REGEX.test(orderId)) {
       return NextResponse.json({ error: 'orderId required' }, { status: 400 });
     }
 

@@ -46,6 +46,7 @@ export function OrderPageContent({
   const [selectedMenu, setSelectedMenu] = useState<MenuItem | null>(null);
   const [cartModalOpen, setCartModalOpen] = useState(false);
   const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const categories = useMemo(() => {
     const set = new Set<string>();
@@ -105,6 +106,7 @@ export function OrderPageContent({
   const handlePlaceOrder = useCallback(async () => {
     if (cart.length === 0) return;
     setOrderSubmitting(true);
+    setOrderError(null);
     const total = cart.reduce((sum, e) => sum + e.menuItem.price * e.quantity, 0);
     try {
       const res = await fetch('/api/orders/create', {
@@ -131,6 +133,7 @@ export function OrderPageContent({
       router.push(`${pathPrefix}/order/${restaurantId}/${tableId}/checkout/${orderId}`);
     } catch (err) {
       console.error(err);
+      setOrderError(err instanceof Error ? err.message : '주문에 실패했습니다. 다시 시도해 주세요.');
       setOrderSubmitting(false);
     }
   }, [cart, restaurantId, tableId, locale, router]);
@@ -275,6 +278,7 @@ export function OrderPageContent({
             onUpdateQuantity={updateCartQuantity}
             onPlaceOrder={handlePlaceOrder}
             isSubmitting={orderSubmitting}
+            orderError={orderError}
           />
         )}
       </AnimatePresence>

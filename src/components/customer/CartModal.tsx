@@ -16,6 +16,7 @@ type Props = {
   onUpdateQuantity: (menuItem: MenuItem, delta: number) => void;
   onPlaceOrder: () => void;
   isSubmitting?: boolean;
+  orderError?: string | null;
 };
 
 export function CartModal({
@@ -25,6 +26,7 @@ export function CartModal({
   onUpdateQuantity,
   onPlaceOrder,
   isSubmitting = false,
+  orderError = null,
 }: Props) {
   const t = useTranslations('cartModal');
 
@@ -127,6 +129,9 @@ export function CartModal({
                 <span className="text-gray-700">{t('total')}</span>
                 <span className="text-primary-600">₩{totalPrice.toLocaleString()}</span>
               </div>
+              {orderError && (
+                <p className="mb-2 text-sm text-red-600">{orderError}</p>
+              )}
               <button
                 type="button"
                 onClick={onPlaceOrder}
