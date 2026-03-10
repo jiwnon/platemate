@@ -44,6 +44,11 @@ export function LoginForm({ locale, redirectTo }: Props) {
     <main className="min-h-screen flex flex-col items-center justify-center p-6 bg-gray-50">
       <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-bold text-gray-900 mb-6">{t('loginTitle')}</h1>
+        <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 text-sm text-blue-700">
+          <p className="font-medium mb-1">테스트 계정</p>
+          <p>이메일: test@te.st</p>
+          <p>비밀번호: test1234</p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
