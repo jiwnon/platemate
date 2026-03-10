@@ -35,8 +35,13 @@ export async function POST(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Allowed types: jpeg, png, webp, gif' }, { status: 400 });
     }
 
-    const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const safeExt = ['jpeg', 'jpg', 'png', 'webp', 'gif'].includes(ext) ? ext : 'jpg';
+    const MIME_TO_EXT: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+      'image/gif': 'gif',
+    };
+    const safeExt = MIME_TO_EXT[file.type] ?? 'jpg';
     const path = `${restaurantId}/${crypto.randomUUID()}.${safeExt}`;
 
     const supabase = createAdminClient();

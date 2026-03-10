@@ -47,8 +47,8 @@ export async function POST(request: Request) {
       try {
         const parsed = JSON.parse(cached) as DocentContent;
         return NextResponse.json(parsed);
-      } catch {
-        // invalid JSON, regenerate below
+      } catch (e) {
+        console.warn('[generate-docent] cached JSON parse failed, regenerating', e);
       }
     }
 
