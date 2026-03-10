@@ -91,33 +91,6 @@ export function CheckoutContent({
       });
   };
 
-  const handleStripePay = async () => {
-    if (!order || order.payment_status === 'paid') return;
-    const basePath = `${pathPrefix}/order/${restaurantId}/${tableId}/checkout/${orderId}`;
-    const successUrl = `${window.location.origin}${basePath}/success?session_id={CHECKOUT_SESSION_ID}`;
-    const cancelUrl = `${window.location.origin}${basePath}`;
-    setPaying(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/payments/stripe/create-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId: order.id, successUrl, cancelUrl }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError((data as { error?: string }).error ?? '세션 생성 실패');
-        return;
-      }
-      const url = (data as { url?: string }).url;
-      if (url) window.location.href = url;
-      else setError('결제 URL을 받지 못했습니다.');
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '결제 요청 실패');
-    } finally {
-      setPaying(false);
-    }
-  };
 
   if (loading) {
     return (
