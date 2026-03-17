@@ -5,8 +5,9 @@
 ## 서비스 한 줄 요약
 
 외국인 관광객을 위한 **QR 코드 기반 테이블 주문 시스템**.
-손님은 QR을 스캔해 본인 언어(한/영/중/일)로 메뉴를 보고 AI 도슨트의 설명을 듣고 주문·결제합니다.
-사장님은 대시보드에서 실시간으로 주문을 받고, AI 주간 리포트로 매출을 분석합니다.
+손님은 QR을 스캔해 본인 언어(한/영/중/일/러)로 메뉴를 보고 AI 도슨트의 설명을 듣고 주문·결제합니다.
+리뷰 제출 시 재방문 10% 할인 쿠폰이 자동 발급되며 카카오톡·LINE·이메일로 공유할 수 있습니다.
+사장님은 대시보드에서 실시간 주문 관리, 리뷰 분석, AI 주간 리포트로 매장을 운영합니다.
 
 - **배포 URL**: https://platem8.xyz
 - **GitHub**: https://github.com/jiwnon/platemate (main 브랜치)
@@ -20,7 +21,7 @@
 | 프레임워크 | Next.js 15 (App Router) + React 19 + TypeScript |
 | DB / Auth / Realtime | Supabase (PostgreSQL) |
 | 스타일 | Tailwind CSS + Framer Motion |
-| 국제화 | next-intl (ko / en / zh / ja) |
+| 국제화 | next-intl (ko / en / zh / ja / ru) |
 | AI | OpenAI GPT-4o-mini (도슨트), GPT-4o (주간 리포트) |
 | 결제 | 토스페이먼츠 (한국 카드), Stripe (해외 — 현재 UI 비활성화) |
 | 배포 | Cloudflare Workers + OpenNext 어댑터 |
@@ -48,6 +49,7 @@ QR 스캔
   → /[locale]/dashboard/[restaurantId]         # 실시간 주문 관리 (Supabase Realtime)
   → /[locale]/dashboard/[restaurantId]/menu    # 메뉴 관리
   → /[locale]/dashboard/[restaurantId]/tables  # 테이블 & QR 코드
+  → /[locale]/dashboard/[restaurantId]/reviews  # 리뷰 분석 대시보드
   → /[locale]/dashboard/[restaurantId]/settings  # 레스토랑 설정
 ```
 
@@ -64,8 +66,9 @@ tables
 
 menu_items
   id, restaurant_id, name, description, name_i18n (JSONB), description_i18n (JSONB),
-  price, image_url, ai_docent_ko/en/zh/ja, category, spicy_level,
+  price, image_url, ai_docent_ko/en/zh/ja/ru, category, spicy_level,
   sort_order, is_available, created_at, updated_at
+  -- name_i18n/description_i18n: 메뉴 저장 시 GPT-4o-mini가 자동으로 5개 언어로 번역
 
 orders
   id, restaurant_id, table_id, status, total_amount, payment_status,
@@ -110,6 +113,7 @@ supabase/migrations/
   20250212000005_restaurant_owners.sql
   20260313000001_push_tokens.sql
   20260317000001_coupons.sql
+  20260317000002_add_ru_locale.sql
 ```
 
 ---
@@ -148,6 +152,7 @@ PATCH  /api/dashboard/[restaurantId]/tables/[tableId]
 DELETE /api/dashboard/[restaurantId]/tables/[tableId]
 GET    /api/dashboard/[restaurantId]/tables/[tableId]/qr   # QR PNG 다운로드
 
+GET    /api/dashboard/[restaurantId]/reviews          # 리뷰 분석 (점수 분포, TOP5 메뉴, 최근 리뷰)
 GET    /api/dashboard/[restaurantId]/weekly-report   # GPT-4o 주간 리포트 (캐시)
 ```
 
@@ -169,6 +174,7 @@ src/
           page.tsx                      # 실시간 주문 대시보드
           menu/page.tsx
           tables/page.tsx
+          reviews/page.tsx              # 리뷰 분석 대시보드
           settings/page.tsx
       order/[restaurantId]/[tableId]/
         page.tsx                        # 메뉴 목록
@@ -189,8 +195,10 @@ src/
       CouponModal.tsx                   # 쿠폰 발급 팝업 (이미지 저장·공유)
     dashboard/
       DashboardContent.tsx              # 실시간 주문 관리
+      OrderCard.tsx                     # 주문 카드 (손님 국적 뱃지 포함)
       MenuManageContent.tsx
       TableManageContent.tsx
+      ReviewsDashboardContent.tsx       # 리뷰 분석 (점수 링, 분포, TOP5, 최근 리뷰)
       RestaurantSettingsContent.tsx
       WeeklyReportModal.tsx
     auth/
@@ -245,8 +253,23 @@ src/
 - 로고: `menu-images/logos/{restaurantId}/{filename}`
 
 **i18n**
-- URL 구조: `/ko/...`, `/en/...`, `/zh/...`, `/ja/...`
+- URL 구조: `/ko/...`, `/en/...`, `/zh/...`, `/ja/...`, `/ru/...`
 - 기본 로케일(ko)은 경로 프리픽스 없이도 동작 (`pathPrefix = locale === 'ko' ? '' : '/${locale}'`)
+- 번역 파일: `public/locales/{locale}.json` (ko/en/zh/ja/ru)
+
+**메뉴 자동 다국어 번역**
+- 메뉴 등록·수정 시 `translateMenuItem()` 호출 (GPT-4o-mini)
+- 입력 언어 자동 감지 → 5개 언어(한/영/중/일/러)로 번역 → `name_i18n`, `description_i18n` JSONB 저장
+- 오류 시 graceful fallback (원본 유지)
+
+**손님 국적 뱃지**
+- 손님 주문 시 브라우저 locale을 `orders.locale`에 저장
+- 대시보드 주문 카드에 국기 + 언어명 뱃지 표시 (🇰🇷한국어 / 🇺🇸English / 🇨🇳中文 / 🇯🇵日本語 / 🇷🇺Русский)
+
+**쿠폰 카카오톡 공유**
+- CouponModal: 이미지 저장(Canvas PNG) / Web Share API / 카카오톡 / LINE / 이메일
+- Kakao JS SDK (`2.7.4`) 동적 로드, 미초기화 시 클립보드 복사 폴백
+- `NEXT_PUBLIC_KAKAO_JS_KEY` 환경 변수 필요
 
 ---
 
@@ -265,6 +288,8 @@ TOSS_SECRET_KEY
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY   # 현재 미사용
 STRIPE_SECRET_KEY                    # 현재 미사용
 STRIPE_WEBHOOK_SECRET                # 현재 미사용
+
+NEXT_PUBLIC_KAKAO_JS_KEY             # 카카오 JS SDK 키 (developers.kakao.com)
 
 NEXT_PUBLIC_APP_URL                  # https://platem8.xyz
 ```
