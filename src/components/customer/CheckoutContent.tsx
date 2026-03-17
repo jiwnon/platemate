@@ -8,6 +8,8 @@ type OrderInfo = {
   id: string;
   total_amount: number;
   payment_status: string;
+  discount_amount: number;
+  coupon_code: string | null;
 };
 
 type Props = {
@@ -40,6 +42,9 @@ export function CheckoutContent({
   const [loading, setLoading] = useState(true);
   const [paying, setPaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [couponInput, setCouponInput] = useState('');
+  const [couponApplying, setCouponApplying] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -64,6 +69,33 @@ export function CheckoutContent({
 
   const pathPrefix = locale === 'ko' ? '' : `/${locale}`;
 
+  const finalAmount = order ? order.total_amount - (order.discount_amount ?? 0) : 0;
+
+  const handleCouponApply = async () => {
+    if (!couponInput.trim() || !order) return;
+    setCouponApplying(true);
+    setCouponError(null);
+    try {
+      const res = await fetch('/api/coupons/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ couponCode: couponInput.trim(), orderId: order.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && (data as { ok?: boolean }).ok) {
+        const { discountAmount } = data as { discountAmount: number };
+        setOrder((prev) => prev ? { ...prev, discount_amount: discountAmount, coupon_code: couponInput.trim().toUpperCase() } : prev);
+        setCouponInput('');
+      } else {
+        setCouponError((data as { error?: string }).error ?? '쿠폰 적용에 실패했습니다.');
+      }
+    } catch {
+      setCouponError('쿠폰 적용에 실패했습니다.');
+    } finally {
+      setCouponApplying(false);
+    }
+  };
+
   const handleTossPay = () => {
     if (!order || order.payment_status === 'paid') return;
     const TossPayments = window.TossPayments;
@@ -80,7 +112,7 @@ export function CheckoutContent({
     client
       .requestPayment('카드', {
         orderId: order.id,
-        amount: order.total_amount,
+        amount: finalAmount,
         orderName: `주문_${orderId.slice(0, 8)}`,
         successUrl,
         failUrl,
@@ -138,10 +170,48 @@ export function CheckoutContent({
       <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 px-4">
         <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
           <h1 className="text-xl font-bold text-gray-900">결제</h1>
-          <div className="mt-4 flex justify-between text-gray-700">
-            <span>결제 금액</span>
-            <span className="font-semibold">₩{order.total_amount.toLocaleString()}</span>
+          <div className="mt-4 space-y-1">
+            <div className="flex justify-between text-gray-700">
+              <span>주문 금액</span>
+              <span>₩{order.total_amount.toLocaleString()}</span>
+            </div>
+            {order.discount_amount > 0 && (
+              <div className="flex justify-between text-orange-600">
+                <span>쿠폰 할인 ({order.coupon_code})</span>
+                <span>-₩{order.discount_amount.toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex justify-between border-t border-gray-200 pt-2 font-semibold text-gray-900">
+              <span>최종 결제 금액</span>
+              <span>₩{finalAmount.toLocaleString()}</span>
+            </div>
           </div>
+
+          {/* 쿠폰 입력 */}
+          {!order.coupon_code && (
+            <div className="mt-4">
+              <p className="text-sm font-medium text-gray-700">할인 쿠폰</p>
+              <div className="mt-1.5 flex gap-2">
+                <input
+                  type="text"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  placeholder="PM-XXXX-XXXX"
+                  className="flex-1 rounded-xl border border-gray-300 px-3 py-2 font-mono text-sm uppercase tracking-widest focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                  maxLength={12}
+                />
+                <button
+                  type="button"
+                  onClick={handleCouponApply}
+                  disabled={couponApplying || !couponInput.trim()}
+                  className="rounded-xl bg-orange-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-orange-600 disabled:opacity-50"
+                >
+                  {couponApplying ? '확인 중…' : '적용'}
+                </button>
+              </div>
+              {couponError && <p className="mt-1 text-xs text-red-600">{couponError}</p>}
+            </div>
+          )}
 
           <p className="mt-4 text-sm font-medium text-gray-700">결제 수단</p>
           <div className="mt-2 space-y-2">

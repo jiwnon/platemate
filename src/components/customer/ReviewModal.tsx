@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { Locale } from '@/types';
+import { CouponModal } from './CouponModal';
 
 export type OrderItemForReview = {
   id: string;
@@ -35,6 +36,7 @@ export function ReviewModal({ orderId, locale, items, onClose }: Props) {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [couponCode, setCouponCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const toggleLiked = (menuItemId: string) => {
@@ -68,7 +70,9 @@ export function ReviewModal({ orderId, locale, items, onClose }: Props) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && (data as { ok?: boolean }).ok) {
-        setSubmitted(true);
+        const code = (data as { couponCode?: string }).couponCode;
+        if (code) setCouponCode(code);
+        else setSubmitted(true);
       } else {
         setError((data as { error?: string }).error ?? '제출에 실패했습니다.');
       }
@@ -78,6 +82,10 @@ export function ReviewModal({ orderId, locale, items, onClose }: Props) {
       setSubmitting(false);
     }
   };
+
+  if (couponCode) {
+    return <CouponModal couponCode={couponCode} onClose={onClose} />;
+  }
 
   if (submitted) {
     return (

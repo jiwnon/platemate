@@ -24,12 +24,16 @@ menu_items: id, restaurant_id, name, description, name_i18n, description_i18n,
             price, image_url, docent_content, sort_order, is_available,
             created_at, updated_at
 orders: id, restaurant_id, table_id, status, total_amount, payment_status,
-        locale, payment_provider, payment_key, created_at, updated_at
+        locale, payment_provider, payment_key,
+        coupon_code, discount_amount,          -- 쿠폰 할인
+        created_at, updated_at
 order_items: id, order_id, menu_item_id, quantity, unit_price, options, created_at
 private_reviews: id, order_id, restaurant_id, rating, food_rating, service_rating,
                  comment, liked_items (JSONB), created_at
 weekly_reports: id, restaurant_id, week_start (DATE), report_json (JSONB), created_at
                 UNIQUE(restaurant_id, week_start)
+coupons: id, code (UNIQUE), restaurant_id, review_order_id, discount_percent,
+         is_used, used_at, used_order_id, expires_at, created_at
 ```
 
 ## 마이그레이션 (순서대로 실행)
@@ -41,6 +45,8 @@ supabase/migrations/
   20250212000003_reviews_food_service_liked.sql  # food_rating, service_rating, liked_items
   20250212000004_weekly_reports.sql    # weekly_reports 테이블
   20250212000005_restaurant_owners.sql # restaurant_owners (사장님–레스토랑 소유)
+  20260313000001_push_tokens.sql       # push_tokens (Capacitor 푸시 알림)
+  20260317000001_coupons.sql           # coupons 테이블, orders에 coupon_code·discount_amount 추가
 ```
 
 ## 완료된 기능
@@ -77,6 +83,16 @@ supabase/migrations/
 - ReviewModal: 음식/서비스 별점(1–5), 개선 의견, 좋았던 메뉴 체크박스
 - API: POST /api/reviews/create (private_reviews 저장)
 - GET /api/orders/[orderId]에 items(메뉴명) 포함
+
+### ✅ Step A-6: 재방문 디지털 쿠폰 시스템
+- **쿠폰 발급**: 리뷰 제출 완료 시 `PM-XXXX-XXXX` 형식 쿠폰 자동 생성 (혼동 문자 I/O/0/1 제외)
+- **CouponModal**: 쿠폰 번호 팝업 표시 → 이미지로 저장(Canvas PNG), 공유하기(Web Share API), 이메일, LINE
+- **쿠폰 적용**: 결제 화면에 쿠폰 코드 입력창 추가, 적용 시 10% 할인 즉시 반영
+- **API**: POST /api/coupons/apply (검증 + 주문 discount_amount 업데이트 + 쿠폰 사용 처리)
+- **DB**: coupons 테이블 (code UNIQUE, restaurant_id, review_order_id, discount_percent, is_used, expires_at 1년)
+- orders 테이블에 coupon_code, discount_amount 컬럼 추가
+- 토스페이먼츠에 할인 후 최종 금액 전달 (finalAmount = total_amount - discount_amount)
+- 마이그레이션: `20260317000001_coupons.sql`
 
 ### ✅ Step B: 사장님 대시보드
 - 경로: /[locale]/dashboard/[restaurantId]
@@ -169,11 +185,12 @@ src/
     restaurant/route.ts, restaurant/upload/route.ts
     orders/create/, [orderId]/route.ts, route.ts
     reviews/create/
+    coupons/apply/
     payments/route.ts, toss/confirm/, stripe/create-session|verify-session|webhook/
   components/customer/
     OrderPageContent, OrderMenuCard, CartBar, CartModal
     MenuCard, MenuDetailModal, DocentSection, LanguageSelector
-    CheckoutContent, CheckoutComplete, ReviewModal
+    CheckoutContent, CheckoutComplete, ReviewModal, CouponModal
   components/dashboard/
     DashboardContent, OrderCard, StatsCards, OrderList, MenuManageContent
     TableManageContent, RestaurantSettingsContent, NewRestaurantForm
@@ -240,7 +257,7 @@ NEXT_PUBLIC_APP_URL  # 선택
 
 **🎯 현재 완성도: 100%**
 
-- **✅ Step A-1 ~ A-5**: 고객 주문 시스템 (메뉴, AI 도슨트, 결제, 리뷰)
+- **✅ Step A-1 ~ A-6**: 고객 주문 시스템 (메뉴, AI 도슨트, 결제, 리뷰, 재방문 쿠폰)
 - **✅ Step B**: 사장님 대시보드 (실시간 주문, 통계)
 - **✅ Step C**: 주간 AI 리포트 (GPT-4o 분석 + 캐싱)
 - **✅ Step D**: 사장님 인증 (Supabase Auth 로그인/회원가입, 대시보드·API 보호)

@@ -1,5 +1,17 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+
+// 혼동 없는 문자만 사용 (I, O, 0, 1 제외)
+const COUPON_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
+function generateCouponCode(): string {
+  let code = 'PM-';
+  for (let i = 0; i < 4; i++) code += COUPON_CHARS[Math.floor(Math.random() * COUPON_CHARS.length)];
+  code += '-';
+  for (let i = 0; i < 4; i++) code += COUPON_CHARS[Math.floor(Math.random() * COUPON_CHARS.length)];
+  return code;
+}
 
 type Body = {
   orderId: string;
@@ -67,7 +79,23 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    // 쿠폰 발급 (실패해도 리뷰 제출은 성공 처리)
+    let couponCode: string | null = null;
+    try {
+      const adminSupabase = createAdminClient();
+      const code = generateCouponCode();
+      const { error: couponError } = await adminSupabase.from('coupons').insert({
+        code,
+        restaurant_id: order.restaurant_id,
+        review_order_id: orderId,
+      });
+      if (!couponError) couponCode = code;
+      else console.error('[reviews/create] coupon insert error', couponError);
+    } catch (e) {
+      console.error('[reviews/create] coupon generation failed', e);
+    }
+
+    return NextResponse.json({ ok: true, couponCode });
   } catch (err) {
     console.error('[reviews/create]', err);
     return NextResponse.json(
