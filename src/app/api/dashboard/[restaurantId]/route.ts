@@ -32,7 +32,7 @@ export async function GET(_request: Request, { params }: Params) {
     const [pendingResult, todayResult] = await Promise.all([
       supabase
         .from('orders')
-        .select('id, table_id, status, total_amount, created_at')
+        .select('id, table_id, status, total_amount, created_at, locale')
         .eq('restaurant_id', restaurantId)
         .eq('status', 'pending')
         .order('created_at', { ascending: true }),
@@ -109,6 +109,7 @@ export async function GET(_request: Request, { params }: Params) {
         status: o.status,
         total_amount: o.total_amount,
         created_at: o.created_at,
+        locale: o.locale ?? null,
         items,
       };
     });

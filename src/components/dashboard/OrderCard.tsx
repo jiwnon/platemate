@@ -16,7 +16,16 @@ export type DashboardOrder = {
   status: string;
   total_amount: number;
   created_at: string;
+  locale: string | null;
   items: OrderItemLine[];
+};
+
+const LOCALE_BADGE: Record<string, { flag: string; label: string }> = {
+  ko: { flag: '🇰🇷', label: '한국어' },
+  en: { flag: '🇺🇸', label: 'English' },
+  zh: { flag: '🇨🇳', label: '中文' },
+  ja: { flag: '🇯🇵', label: '日本語' },
+  ru: { flag: '🇷🇺', label: 'Русский' },
 };
 
 type Props = {
@@ -46,12 +55,20 @@ export function OrderCard({ order, onComplete }: Props) {
   };
 
   const tableLabel = order.table_number != null ? `테이블 ${order.table_number}` : order.table_name;
+  const localeBadge = order.locale ? LOCALE_BADGE[order.locale] : null;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="font-semibold text-gray-900">{tableLabel}</p>
+          <div className="flex items-center gap-2">
+            <p className="font-semibold text-gray-900">{tableLabel}</p>
+            {localeBadge && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
+                {localeBadge.flag} {localeBadge.label}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500">{formatOrderTime(order.created_at)}</p>
         </div>
         <button
