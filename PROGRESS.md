@@ -22,7 +22,7 @@
 | DB / Auth / Realtime | Supabase (PostgreSQL) |
 | 스타일 | Tailwind CSS + Framer Motion |
 | 국제화 | next-intl (ko / en / zh / ja / ru) |
-| AI | OpenAI GPT-4o-mini (도슨트), GPT-4o (주간 리포트) |
+| AI | OpenAI GPT-4o-mini (도슨트·번역), GPT-4o (주간 리포트·메뉴판 스캔) |
 | 결제 | 토스페이먼츠 (한국 카드), Stripe (해외 — 현재 UI 비활성화) |
 | 배포 | Cloudflare Workers + OpenNext 어댑터 |
 | 모바일 | Capacitor (Android 앱, 패키지 `com.platemate.app`) + PWA |
@@ -146,6 +146,7 @@ POST   /api/dashboard/[restaurantId]/restaurant/upload
 POST   /api/dashboard/[restaurantId]/menu
 PATCH  /api/dashboard/[restaurantId]/menu/[menuItemId]
 DELETE /api/dashboard/[restaurantId]/menu/[menuItemId]
+POST   /api/dashboard/[restaurantId]/menu/scan                # GPT-4o Vision 메뉴판 스캔 (미리보기용, DB 저장 없음)
 POST   /api/dashboard/[restaurantId]/menu/upload
 
 POST   /api/dashboard/[restaurantId]/tables
@@ -262,6 +263,13 @@ src/
 - 메뉴 등록·수정 시 `translateMenuItem()` 호출 (GPT-4o-mini)
 - 입력 언어 자동 감지 → 5개 언어(한/영/중/일/러)로 번역 → `name_i18n`, `description_i18n` JSONB 저장
 - 오류 시 graceful fallback (원본 유지)
+
+**메뉴판 사진 → AI 자동 메뉴 등록**
+- 대시보드 메뉴 관리 화면 "📷 메뉴판으로 등록" 버튼
+- 종이 메뉴판 사진 1장 → GPT-4o Vision이 메뉴명·가격·카테고리 자동 인식
+- 인식 결과 미리보기에서 인라인 수정 + 항목 선택 후 일괄 등록
+- 등록 즉시 `translateMenuItem()` 자동 실행 → 5개 언어 번역까지 완료
+- 관련 파일: `api/dashboard/[restaurantId]/menu/scan/route.ts`, `lib/openai/client.ts` (`scanMenuFromImage`), `components/dashboard/MenuManageContent.tsx` (`MenuScanModal`)
 
 **손님 국적 뱃지**
 - 손님 주문 시 브라우저 locale을 `orders.locale`에 저장

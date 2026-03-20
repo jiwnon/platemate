@@ -41,7 +41,7 @@ export function MenuManageContent({ restaurantId }: Props) {
   const [items, setItems] = useState<MenuItemRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [modal, setModal] = useState<'add' | { edit: MenuItemRow } | null>(null);
+  const [modal, setModal] = useState<'add' | 'scan' | { edit: MenuItemRow } | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -98,7 +98,14 @@ export function MenuManageContent({ restaurantId }: Props) {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end gap-2 mb-4">
+        <button
+          type="button"
+          onClick={() => setModal('scan')}
+          className="rounded-lg border border-primary-500 px-4 py-2 text-primary-600 hover:bg-primary-50"
+        >
+          📷 메뉴판으로 등록
+        </button>
         <button
           type="button"
           onClick={() => setModal('add')}
@@ -187,7 +194,18 @@ export function MenuManageContent({ restaurantId }: Props) {
         </div>
       )}
 
-      {modal && (
+      {modal === 'scan' && (
+        <MenuScanModal
+          restaurantId={restaurantId}
+          onClose={() => setModal(null)}
+          onSaved={() => {
+            setModal(null);
+            load();
+          }}
+        />
+      )}
+
+      {modal && modal !== 'scan' && (
         <MenuFormModal
           restaurantId={restaurantId}
           initial={modal === 'add' ? null : modal.edit}
@@ -199,6 +217,295 @@ export function MenuManageContent({ restaurantId }: Props) {
         />
       )}
     </>
+  );
+}
+
+type ScanModalProps = {
+  restaurantId: string;
+  onClose: () => void;
+  onSaved: () => void;
+};
+
+type ScannedItem = {
+  name: string;
+  price: number;
+  description: string;
+  category: string;
+  selected: boolean;
+};
+
+function MenuScanModal({ restaurantId, onClose, onSaved }: ScanModalProps) {
+  const [step, setStep] = useState<'select' | 'scanning' | 'preview' | 'saving'>('select');
+  const [items, setItems] = useState<ScannedItem[]>([]);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleFileChange = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      if (file.size > 5 * 1024 * 1024) {
+        setError('이미지가 5MB를 초과합니다. 더 작은 이미지를 사용해 주세요.');
+        return;
+      }
+
+      setStep('scanning');
+      setError(null);
+
+      try {
+        const form = new FormData();
+        form.append('image', file);
+        const res = await fetch(`/api/dashboard/${restaurantId}/menu/scan`, {
+          method: 'POST',
+          body: form,
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as { error?: string }).error ?? 'Scan failed');
+        }
+        const { items: raw } = (await res.json()) as {
+          items: Array<{ name: string; price: number; description: string; category: string }>;
+        };
+        setItems(raw.map((item) => ({ ...item, selected: true })));
+        setStep('preview');
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Scan failed');
+        setStep('select');
+      }
+    },
+    [restaurantId]
+  );
+
+  const handleSave = useCallback(async () => {
+    const toSave = items.filter((i) => i.selected);
+    if (toSave.length === 0) return;
+
+    setStep('saving');
+    setProgress({ done: 0, total: toSave.length });
+    setError(null);
+
+    for (let i = 0; i < toSave.length; i++) {
+      const item = toSave[i];
+      try {
+        const res = await fetch(`/api/dashboard/${restaurantId}/menu`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: item.name,
+            description: item.description || null,
+            price: item.price,
+            category: item.category || null,
+          }),
+        });
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error((data as { error?: string }).error ?? 'Create failed');
+        }
+      } catch (err) {
+        setError(`"${item.name}" 등록 실패: ${err instanceof Error ? err.message : 'Unknown error'}`);
+        setStep('preview');
+        return;
+      }
+      setProgress({ done: i + 1, total: toSave.length });
+    }
+
+    onSaved();
+  }, [items, restaurantId, onSaved]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onClose}>
+      <div
+        className="w-full max-w-lg rounded-xl bg-white shadow-xl max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">📷 메뉴판으로 등록</h2>
+
+          {step === 'select' && (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                종이 메뉴판 사진을 찍으면 AI가 메뉴를 자동으로 인식합니다.
+              </p>
+              {error && <p className="text-sm text-red-600">{error}</p>}
+              <label className="block">
+                <span className="sr-only">메뉴판 이미지 선택</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="w-full text-sm text-gray-600 file:mr-2 file:rounded file:border-0 file:bg-primary-50 file:px-3 file:py-1.5 file:text-primary-700"
+                />
+              </label>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 'scanning' && (
+            <div className="py-8 text-center text-gray-500">
+              <p className="text-base">메뉴판을 분석하고 있어요…</p>
+              <p className="text-sm mt-1 text-gray-400">잠시만 기다려 주세요.</p>
+            </div>
+          )}
+
+          {step === 'preview' && (
+            <div className="space-y-4">
+              {items.length === 0 ? (
+                <div className="py-6 text-center space-y-3">
+                  <p className="text-gray-600">메뉴를 인식하지 못했어요.</p>
+                  <p className="text-sm text-gray-400">더 밝고 선명한 사진으로 다시 시도해 주세요.</p>
+                  <button
+                    type="button"
+                    onClick={() => setStep('select')}
+                    className="rounded-lg bg-primary-500 px-4 py-2 text-white hover:bg-primary-600"
+                  >
+                    다시 촬영
+                  </button>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-gray-600">
+                    {items.length}개 메뉴가 인식되었습니다. 수정 후 등록하세요.
+                  </p>
+                  {error && <p className="text-sm text-red-600">{error}</p>}
+                  <div className="border border-gray-200 rounded-lg overflow-hidden">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50">
+                        <tr>
+                          <th className="w-8 px-2 py-2">
+                            <input
+                              type="checkbox"
+                              checked={items.every((i) => i.selected)}
+                              onChange={(e) =>
+                                setItems((prev) =>
+                                  prev.map((i) => ({ ...i, selected: e.target.checked }))
+                                )
+                              }
+                              className="rounded border-gray-300"
+                            />
+                          </th>
+                          <th className="px-2 py-2 text-left font-medium text-gray-700">이름</th>
+                          <th className="px-2 py-2 text-left font-medium text-gray-700 w-24">가격</th>
+                          <th className="px-2 py-2 text-left font-medium text-gray-700 w-24">카테고리</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {items.map((item, idx) => (
+                          <tr key={idx} className={!item.selected ? 'opacity-40' : ''}>
+                            <td className="px-2 py-1.5 text-center">
+                              <input
+                                type="checkbox"
+                                checked={item.selected}
+                                onChange={(e) =>
+                                  setItems((prev) =>
+                                    prev.map((it, i) =>
+                                      i === idx ? { ...it, selected: e.target.checked } : it
+                                    )
+                                  )
+                                }
+                                className="rounded border-gray-300"
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={(e) =>
+                                  setItems((prev) =>
+                                    prev.map((it, i) =>
+                                      i === idx ? { ...it, name: e.target.value } : it
+                                    )
+                                  )
+                                }
+                                className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <input
+                                type="number"
+                                min={0}
+                                value={item.price || ''}
+                                onChange={(e) =>
+                                  setItems((prev) =>
+                                    prev.map((it, i) =>
+                                      i === idx
+                                        ? { ...it, price: Number(e.target.value) || 0 }
+                                        : it
+                                    )
+                                  )
+                                }
+                                className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                              />
+                            </td>
+                            <td className="px-2 py-1.5">
+                              <select
+                                value={item.category}
+                                onChange={(e) =>
+                                  setItems((prev) =>
+                                    prev.map((it, i) =>
+                                      i === idx ? { ...it, category: e.target.value } : it
+                                    )
+                                  )
+                                }
+                                className="w-full rounded border border-gray-200 px-2 py-1 text-sm"
+                              >
+                                <option value="main">메인</option>
+                                <option value="side">사이드</option>
+                                <option value="drink">음료</option>
+                              </select>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 rounded-lg border border-gray-300 py-2 text-gray-700 hover:bg-gray-50"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSave}
+                      disabled={items.filter((i) => i.selected).length === 0}
+                      className="flex-1 rounded-lg bg-primary-500 py-2 text-white hover:bg-primary-600 disabled:opacity-50"
+                    >
+                      선택한 메뉴 등록하기 ({items.filter((i) => i.selected).length}개)
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {step === 'saving' && progress && (
+            <div className="py-8 text-center text-gray-500">
+              <p className="text-base">
+                {progress.done}/{progress.total} 등록 중…
+              </p>
+              <div className="mt-3 h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary-500 transition-all"
+                  style={{ width: `${(progress.done / progress.total) * 100}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
 

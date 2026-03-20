@@ -121,6 +121,54 @@ If description is empty, return empty strings for all description values.`,
   };
 }
 
+/**
+ * 메뉴판 이미지에서 메뉴 목록을 추출 (GPT-4o Vision).
+ * 파싱 실패 시 빈 배열 반환.
+ */
+export async function scanMenuFromImage(
+  imageBase64: string,
+  mimeType: string
+): Promise<Array<{ name: string; price: number; description: string; category: string }>> {
+  const openai = getClient();
+  try {
+    const res = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      response_format: { type: 'json_object' as const },
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a menu OCR assistant for a Korean restaurant app.\n' +
+            'Extract all menu items from the image.\n' +
+            'Respond ONLY with valid JSON: { "items": [{ "name": string, "price": number, "description": string, "category": "main"|"side"|"drink" }] }\n' +
+            '- price: number in KRW (Korean Won), 0 if not visible\n' +
+            '- category: guess from context (main=밥/면/고기, side=반찬/튀김, drink=음료/주류)\n' +
+            '- description: empty string if not visible\n' +
+            '- name: use the original Korean text from the image',
+        },
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: { url: `data:${mimeType};base64,${imageBase64}` },
+            },
+            { type: 'text', text: '이 메뉴판에서 메뉴를 추출해 주세요.' },
+          ],
+        },
+      ],
+      max_tokens: 2000,
+    });
+    const raw = res.choices[0]?.message?.content?.trim();
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as { items?: unknown };
+    if (!Array.isArray(parsed.items)) return [];
+    return parsed.items as Array<{ name: string; price: number; description: string; category: string }>;
+  } catch {
+    return [];
+  }
+}
+
 export type WeeklyReportAggregate = {
   totalRevenue: number;
   orderCount: number;
